@@ -74,8 +74,8 @@ class GithubCollector(Collector):
         for repo in self.client.get_user().get_repos():
             try:
                 for commit in repo.get_commits(since=day, until=day + timedelta(days=1)):
-                    commit_date = commit.commit.committer.date.isoformat()
-                    commit_slug = f'{commit.commit.sha[:7]}-{commit_date}'
+                    commit_date = commit.commit.author.date.isoformat()
+                    commit_slug = f'{commit.commit.sha[:7]}|{commit_date}'
                     try:
                         response[repo.full_name].append(commit_slug)
                     except KeyError:

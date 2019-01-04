@@ -37,7 +37,7 @@ if __name__ == '__main__':
         'steps': goals.GreaterThanGoal(constants.STEP_GOAL, collected['collections']['Garmin']['totalSteps']).report(),
         'sleep': goals.GreaterThanGoal(constants.SLEEP_GOAL, collected['collections']['Garmin']['sleepingSeconds']).report(),
         'protein': goals.GreaterThanGoal(constants.PROTEIN_GOAL, collected['collections']['MyFitnessPal']['nutrition']['protein']).report(),
-        'code': goals.GreaterThanGoal(constants.COMMIT_GOAL, len(collected['collections'][GithubCollector.name])).report()
+        'code': goals.GreaterThanGoal(constants.COMMIT_GOAL, len(collected['collections'][GithubCollector.name].keys())).report()
     }
 
     filename = f'{today_short}.json'

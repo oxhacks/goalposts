@@ -22,12 +22,12 @@ class Goal(ABC):
 
 class LessThanGoal(Goal):
     def _check(self, target, current):
-        return current < target
+        return current <= target
 
 
 class GreaterThanGoal(Goal):
     def _check(self, target, current):
-        return current > target
+        return current >= target
 
 
 class EqualGoal(Goal):
