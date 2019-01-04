@@ -1,6 +1,6 @@
 """Collectors that are used to retrieve stats."""
 
-import warnings
+import logging
 from abc import ABC
 from datetime import datetime, timedelta
 from typing import Dict
@@ -12,12 +12,20 @@ from goalposts import config
 from goalposts.clients import UserGarminClient
 
 
+LOG = logging.getLogger(__name__)
+
+
 class Collector(ABC):
     """Retrieve the stats from different endpoints."""
-    def collect(self, day: datetime) -> Dict:
-        return self._collect(day)
+    name = __name__
 
-    def _collect(self):
+    def collect(self, day: datetime) -> Dict:
+        LOG.info(f'Collecting stats for {self.name} on {day.isoformat()}')
+        collected = self._collect(day)
+        LOG.debug(f'Collection for {self.name} complete')
+        return collected
+
+    def _collect(self, day: datetime):
         raise NotImplementedError("Do not use the Collector class directly.")
 
 
@@ -35,9 +43,8 @@ class MyFitnessPalCollector(Collector):
             try:
                 return measurements[weight_date]
             except KeyError:
-                return get_weight(day.date() - timedelta(days=1))
+                return get_weight(weight_date - timedelta(days=1))
         weight = get_weight()
-        print('weight', weight)
         return {'nutrition': stats.totals, 'weight': weight}
 
 
@@ -62,16 +69,18 @@ class GithubCollector(Collector):
         self.client = Github(config.GITHUB_TOKEN)
 
     def _collect(self, day: datetime) -> Dict:
-        response = []
-        today = day.strftime('%Y-%m-%d')
+        response = {}
 
         for repo in self.client.get_user().get_repos():
             try:
-                for commit in repo.get_commits():
-                    if today != commit.commit.committer.date.strftime('%Y-%m-%d'):
-                        break
-                    response.append(commit.commit.committer.date.isoformat())
+                for commit in repo.get_commits(since=day, until=day + timedelta(days=1)):
+                    commit_date = commit.commit.committer.date.isoformat()
+                    commit_slug = f'{commit.commit.sha[:7]}-{commit_date}'
+                    try:
+                        response[repo.full_name].append(commit_slug)
+                    except KeyError:
+                        response[repo.full_name] = [commit_slug]
             except GithubException:
-                warnings.warn(f'Github: repo {repo.full_name} is bare')
+                LOG.warn(f'Github: repo {repo.full_name} is bare')
                 continue
         return response
