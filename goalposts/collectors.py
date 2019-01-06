@@ -20,16 +20,32 @@ class Collector(ABC):
     name = __name__
 
     def collect(self, day: datetime) -> Dict:
+        """The base collector method that fires the internal _collect method.
+
+        This method should not be overridden.
+
+        :param day: the datetime to collect
+        :returns: the response from the API
+
+        """
         LOG.info(f'Collecting stats for {self.name} on {day.isoformat()}')
         collected = self._collect(day)
         LOG.debug(f'Collection for {self.name} complete')
         return collected
 
     def _collect(self, day: datetime):
+        """Collection method that should be overridden by Collectors.
+
+        Should accept a datetime and return an API response.
+
+        :param day: the day to collect
+
+        """
         raise NotImplementedError("Do not use the Collector class directly.")
 
 
 class MyFitnessPalCollector(Collector):
+    """Collector to grab weight and nutrition information from MFP."""
     name = 'MyFitnessPal'
 
     def __init__(self, *args, **kwargs):
@@ -38,7 +54,7 @@ class MyFitnessPalCollector(Collector):
 
     def _collect(self, day: datetime) -> Dict:
         stats = self.client.get_date(day.year, day.month, day.day)
-        def get_weight(weight_date: datetime=day.date()):
+        def get_weight(weight_date: datetime = day.date()):
             measurements = self.client.get_measurements('Weight', weight_date)
             try:
                 return measurements[weight_date]
@@ -49,6 +65,7 @@ class MyFitnessPalCollector(Collector):
 
 
 class GarminCollector(Collector):
+    """Collector to get daily activity data from Garmin."""
     name = 'Garmin'
 
     def __init__(self, *args, **kwargs):
@@ -62,6 +79,7 @@ class GarminCollector(Collector):
 
 
 class GithubCollector(Collector):
+    """Collector to retrieve recent commits from Github."""
     name = 'Github'
 
     def __init__(self, *args, **kwargs):
@@ -81,6 +99,6 @@ class GithubCollector(Collector):
                     except KeyError:
                         response[repo.full_name] = [commit_slug]
             except GithubException:
-                LOG.warn(f'Github: repo {repo.full_name} is bare')
+                LOG.warning(f'Github: repo {repo.full_name} is bare')
                 continue
         return response

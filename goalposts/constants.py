@@ -1,3 +1,5 @@
+"""These numbers should used to determine goals that are met."""
+
 WEIGHT_START = 291.4
 WEIGHT_GOAL = 220
 PROTEIN_GOAL = 220
