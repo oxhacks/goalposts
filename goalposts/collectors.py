@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 
 import myfitnesspal
+from goodreads import client as goodreads_client
 from github import Github, GithubException
 
 from goalposts import config
@@ -102,3 +103,16 @@ class GithubCollector(Collector):
                 LOG.warning(f'Github: repo {repo.full_name} is bare')
                 continue
         return response
+
+
+class GoodreadsCollector(Collector):
+    """Collector to retrieve user status information from Goodreads."""
+    name = 'Goodreads'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.client = goodreads_client.GoodreadsClient(config.GOODREADS_KEY, config.GOODREADS_SECRET)
+        self.client.authenticate()
+
+    def _collect(self, day: datetime) -> Dict:
+        return {'book': self.client.book(1)}

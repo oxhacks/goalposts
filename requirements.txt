@@ -1,3 +1,4 @@
 myfitnesspal
 -e git://github.com/petergardfjall/garminexport.git#egg=garminexport
 PyGithub
+goodreads

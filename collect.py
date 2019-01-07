@@ -4,15 +4,16 @@ import argparse
 from datetime import datetime, date
 
 from goalposts import config, constants, goals
-from goalposts.collectors import MyFitnessPalCollector, GarminCollector, GithubCollector
+from goalposts.collectors import MyFitnessPalCollector, GarminCollector, GithubCollector, GoodreadsCollector
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Collect data about yourself.')
     parser.add_argument('--date', help='Date to use for the report.')
     args = parser.parse_args()
 
-    collectors = [MyFitnessPalCollector, GarminCollector, GithubCollector]
+    #collectors = [MyFitnessPalCollector, GarminCollector, GithubCollector]
+    collectors = [GoodreadsCollector]
     today = datetime.strptime(args.date, '%Y-%m-%d') if args.date else datetime.today()
     today_short = today.strftime('%Y%m%d')
     collected = {
@@ -44,3 +45,7 @@ if __name__ == '__main__':
     filepath = os.path.join(config.REPORT_DIR, filename)
     with open(filepath, 'w') as outfile:
         json.dump(collected, outfile, indent=4)
+
+
+if __name__ == '__main__':
+    main()
