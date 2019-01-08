@@ -62,7 +62,8 @@ class MyFitnessPalCollector(Collector):
             except KeyError:
                 return get_weight(weight_date - timedelta(days=1))
         weight = get_weight()
-        return {'nutrition': stats.totals, 'weight': weight}
+        stats.totals.update({'weight': weight})
+        return stats.totals
 
 
 class GarminCollector(Collector):

@@ -1,19 +1,17 @@
+"""Fire the collectors and save the results."""
+
 import os
 import json
 import argparse
-from datetime import datetime, date
+from datetime import datetime
 
 from goalposts import config, constants, goals
-from goalposts.collectors import MyFitnessPalCollector, GarminCollector, GithubCollector, GoodreadsCollector
+from goalposts.collectors import MyFitnessPalCollector, GarminCollector, GithubCollector
 
 
-def main():
-    parser = argparse.ArgumentParser(description='Collect data about yourself.')
-    parser.add_argument('--date', help='Date to use for the report.')
-    args = parser.parse_args()
-
-    #collectors = [MyFitnessPalCollector, GarminCollector, GithubCollector]
-    collectors = [GoodreadsCollector]
+def collect(args):
+    """Run the collection job."""
+    collectors = [MyFitnessPalCollector, GarminCollector, GithubCollector]
     today = datetime.strptime(args.date, '%Y-%m-%d') if args.date else datetime.today()
     today_short = today.strftime('%Y%m%d')
     collected = {
@@ -29,16 +27,21 @@ def main():
         response = collector().collect(today)
         collected['collections'][collector.name] = response
 
-    collected['weight']['current'] = collected['collections']['MyFitnessPal']['weight']
-    collected['weight']['loss'] = constants.WEIGHT_START - collected['collections'][MyFitnessPalCollector.name]['weight']
+    collected['weight']['current'] = collected['collections'][MyFitnessPalCollector.name]['weight']
+    collected['weight']['loss'] = constants.WEIGHT_START - \
+                                  collected['collections'][MyFitnessPalCollector.name]['weight']
 
     collected['goals'] = {
-        'deficit': goals.LessThanGoal(collected['collections']['Garmin']['totalKilocalories'],
-                                      collected['collections']['MyFitnessPal']['nutrition']['calories']).report(),
-        'steps': goals.GreaterThanGoal(constants.STEP_GOAL, collected['collections']['Garmin']['totalSteps']).report(),
-        'sleep': goals.GreaterThanGoal(constants.SLEEP_GOAL, collected['collections']['Garmin']['sleepingSeconds']).report(),
-        'protein': goals.GreaterThanGoal(constants.PROTEIN_GOAL, collected['collections']['MyFitnessPal']['nutrition']['protein']).report(),
-        'code': goals.GreaterThanGoal(constants.COMMIT_GOAL, len(collected['collections'][GithubCollector.name].keys())).report()
+        'deficit': goals.LessThanGoal(collected['collections'][GarminCollector.name]['totalKilocalories'],
+                                      collected['collections'][MyFitnessPalCollector.name]['calories']).report(),
+        'steps': goals.GreaterThanGoal(constants.STEP_GOAL,
+                                       collected['collections'][GarminCollector.name]['totalSteps']).report(),
+        'sleep': goals.GreaterThanGoal(constants.SLEEP_GOAL,
+                                       collected['collections'][GarminCollector.name]['sleepingSeconds']).report(),
+        'protein': goals.GreaterThanGoal(constants.PROTEIN_GOAL,
+                                         collected['collections'][MyFitnessPalCollector.name]['protein']).report(),
+        'code': goals.GreaterThanGoal(constants.COMMIT_GOAL,
+                                      len(collected['collections'][GithubCollector.name].keys())).report()
     }
 
     filename = f'{today_short}.json'
@@ -47,5 +50,13 @@ def main():
         json.dump(collected, outfile, indent=4)
 
 
+def run_collection():
+    """Parse the arguments for the collector."""
+    parser = argparse.ArgumentParser(description='Collect data about yourself.')
+    parser.add_argument('--date', help='Date to use for the report.')
+    cli_args = parser.parse_args()
+    collect(cli_args)
+
+
 if __name__ == '__main__':
-    main()
+    run_collection()

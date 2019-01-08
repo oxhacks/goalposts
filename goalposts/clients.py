@@ -19,7 +19,7 @@ class UserGarminClient(GarminClient):
         """
         day_string = day.isoformat().split('T')[0]
         cache_buster = randint(100000, 1000000)
-        url = f'https://connect.garmin.com/modern/proxy/usersummary-service/usersummary/daily/\
-                {token}?calendarDate={day_string}&_={cache_buster}'
+        url = f'https://connect.garmin.com/modern/proxy/usersummary-service/usersummary/daily/{token}?calendarDate={day_string}&_={cache_buster}'
+        print(f'Making call to {url}')
         response = self.session.get(url)
         return response.json()
