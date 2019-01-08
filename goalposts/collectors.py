@@ -63,6 +63,10 @@ class MyFitnessPalCollector(Collector):
                 return get_weight(weight_date - timedelta(days=1))
         weight = get_weight()
         stats.totals.update({'weight': weight})
+        if not stats.totals.get('calories'):
+            stats.totals['calories'] = -1
+        if not stats.totals.get('protein'):
+            stats.totals['protein'] = -1
         return stats.totals
 
 

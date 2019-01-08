@@ -1,18 +1,24 @@
 """Fire the collectors and save the results."""
 
 import os
+import logging
 import json
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from goalposts import config, constants, goals
 from goalposts.collectors import MyFitnessPalCollector, GarminCollector, GithubCollector
 
 
-def collect(args):
+def date_range(start_date: datetime, end_date: datetime, offset=timedelta(days=1)):
+    while start_date <= end_date:
+        yield start_date
+        start_date += offset
+
+
+def collect(today: datetime):
     """Run the collection job."""
     collectors = [MyFitnessPalCollector, GarminCollector, GithubCollector]
-    today = datetime.strptime(args.date, '%Y-%m-%d') if args.date else datetime.today()
     today_short = today.strftime('%Y%m%d')
     collected = {
         'date_long': today.isoformat(),
@@ -50,12 +56,25 @@ def collect(args):
         json.dump(collected, outfile, indent=4)
 
 
+def parse_date_type(possible_date):
+    try:
+        return datetime.strptime(possible_date, '%Y-%m-%d')
+    except TypeError:
+        return possible_date
+
+
 def run_collection():
     """Parse the arguments for the collector."""
+    logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description='Collect data about yourself.')
-    parser.add_argument('--date', help='Date to use for the report.')
+    parser.add_argument('--start', default=datetime.today(), help='Date to start the collection',
+                        type=parse_date_type)
+    parser.add_argument('--end', default=datetime.today(), help='Date to use for the report.',
+                        type=parse_date_type)
     cli_args = parser.parse_args()
-    collect(cli_args)
+    for day in date_range(cli_args.start, cli_args.end):
+        logging.info(f'Collecting {day}')
+        collect(day)
 
 
 if __name__ == '__main__':
